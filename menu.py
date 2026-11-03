@@ -1,6 +1,6 @@
 
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 from pathlib import Path
 import pandas as pd
 
@@ -86,6 +86,28 @@ class DiscogsApp:
             justify="left"
         )
         self.columns_label.pack(padx=10, pady=10)
+
+        self.table = tk.Toplevel(root)
+        self.table.title("Data Table")
+        self.table.geometry("800x400")
+
+        tree = ttk.Treeview(
+            self.table,
+            columns=list(self.df.columns),
+            show="headings"
+        )
+        scrollbar = ttk.Scrollbar(self.table, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scrollbar.set)
+
+        for column in self.df.columns:
+            tree.heading(column, text=column)
+            tree.column(column, width=120, anchor="w")
+
+        for row in self.df.itertuples(index=False, name=None):
+            tree.insert("", "end", values=row)
+
+        tree.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
 
 
 if __name__ == "__main__":
