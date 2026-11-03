@@ -1,19 +1,94 @@
-# Menu for the record collection database application
-# front-end GUI using Tkinter 
+
 import tkinter as tk
-class Menu:
+from tkinter import filedialog, messagebox
+from pathlib import Path
+import pandas as pd
+
+
+class DiscogsApp:
+
     def __init__(self, root):
         self.root = root
-        self.root.title("Record Collection Database")
-        self.root.geometry("400x300")
-        self.label = tk.Label(self.root, text="Welcome to the Record Collection Database!")
-        self.label.pack(pady=20)
-        self.start_button = tk.Button(self.root, text="Start", command=self.start)
-        self.start_button.pack(pady=20)
+        self.root.title("Discogs Collection Manager")
+        self.root.geometry("800x600")
 
-    def start(self):
-        self.label.config(text="Starting the application...")
-        self.start_button.config(state=tk.DISABLED)
-        self.root.update()
-        # Here you would typically launch the main application window or perform other initialization tasks.
-        self.root.destroy()  # Close the menu window after starting the main application
+        # CSV columns to extract
+        self.columns = [
+            "Catalog#",
+            "Artist",
+            "Title",
+            "Label",
+            "Format",
+            "Rating",
+            "Released",
+            "release_id",
+            "CollectionFolder",
+            "Date Added",
+            "Collection Media Condition",
+            "Collection Sleeve Condition",
+            "Collection Notes"
+        ]
+
+        # Find the discogs folder
+        discogs_folder = Path.cwd() / "Record-Collection-DB" / "discogs"
+
+        # Check whether the folder exists
+        if not discogs_folder.exists():
+            messagebox.showerror(
+                "Folder Not Found",
+                f"Could not find folder: {discogs_folder}"
+            )
+            return
+
+        # Search for CSV files in the folder
+        csv_files = list(discogs_folder.glob("*.csv"))
+
+        if not csv_files:
+            messagebox.showerror(
+                "CSV Not Found",
+                "No CSV files were found in the discogs folder."
+            )
+            return
+
+        # Load the first CSV file found
+        csv_file = csv_files[0]
+
+        try:
+            # Load only the specified columns into a DataFrame
+            self.df = pd.read_csv(
+                csv_file,
+                usecols=self.columns
+            )
+
+            print(f"Loaded file: {csv_file}")
+            print(self.df.head())
+
+        except Exception as e:
+            messagebox.showerror(
+                "CSV Loading Error",
+                str(e)
+            )
+            return
+
+        # Display basic information in the Tkinter window
+        self.label = tk.Label(
+            root,
+            text=f"Loaded {len(self.df)} records from {csv_file.name}",
+            font=("Arial", 14)
+        )
+        self.label.pack(pady=20)
+
+        # Display the DataFrame column names
+        self.columns_label = tk.Label(
+            root,
+            text="Columns loaded:\n" + ",\n".join(self.df.columns),
+            wraplength=750,
+            justify="left"
+        )
+        self.columns_label.pack(padx=10, pady=10)
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = DiscogsApp(root)
+    root.mainloop()
