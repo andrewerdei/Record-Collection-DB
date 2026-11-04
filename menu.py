@@ -11,6 +11,7 @@ class DiscogsApp:
         self.root = root
         self.root.title("Discogs Collection Manager")
         self.root.geometry("800x600")
+        self.sort_directions = {}
 
         # CSV columns to extract
         self.columns = [
@@ -30,7 +31,7 @@ class DiscogsApp:
         ]
 
         # Find the discogs folder
-        discogs_folder = Path.cwd() / "Record-Collection-DB" / "discogs"
+        discogs_folder = Path.cwd() /"discogs"
 
         # Check whether the folder exists
         if not discogs_folder.exists():
@@ -97,23 +98,57 @@ class DiscogsApp:
             )
             return max_width * 8
 
-        tree = ttk.Treeview(
+        self.tree = ttk.Treeview(
             self.table,
             columns=list(self.df.columns),
             show="headings"
         )
-        scrollbar = ttk.Scrollbar(self.table, orient="vertical", command=tree.yview)
-        tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar = ttk.Scrollbar(self.table, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=scrollbar.set)
 
         for column in self.df.columns:
-            tree.heading(column, text=column)
-            tree.column(column, width=fit_width(column), anchor="w")
+            self.tree.heading(column, text=column, command=lambda col=column: self.sort_by(col))
+            self.tree.column(column, width=fit_width(column), anchor="w")
 
         for row in self.df.itertuples(index=False, name=None):
-            tree.insert("", "end", values=row)
+            self.tree.insert("", "end", values=row)
 
-        tree.pack(side="left", fill="both", expand=True)
+        self.tree.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
+
+
+
+    def sort_by(self, column):
+        # Get current sort direction (default ascending)
+        ascending = self.sort_directions.get(column, True)
+
+        # Sort the DataFrame
+        self.df = self.df.sort_values(
+            by=column,
+            ascending=ascending
+        )
+
+        # Toggle sort direction for next click
+        self.sort_directions[column] = not ascending
+
+        for col in self.df.columns:
+            if col == column:
+                arrow = " \\/ " if ascending else " /\\ "
+                self.tree.heading(
+                    col,
+                    text=f"{col}{arrow}"
+                )
+            else:
+                # Remove arrows from previously selected columns
+                self.tree.heading(col, text=col)
+
+        # Clear existing Treeview rows
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        # Insert sorted rows
+        for row in self.df.itertuples(index=False, name=None):
+            self.tree.insert("", "end", values=row)
 
 
 if __name__ == "__main__":
