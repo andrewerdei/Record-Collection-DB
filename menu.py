@@ -103,6 +103,8 @@ class DiscogsApp:
             columns=list(self.df.columns),
             show="headings"
         )
+        self.tree.tag_configure("oddrow", background="white")
+        self.tree.tag_configure("evenrow", background="#E8E8E8")
         scrollbar = ttk.Scrollbar(self.table, orient="vertical", command=self.tree.yview)
         self.tree.configure(yscrollcommand=scrollbar.set)
 
@@ -110,8 +112,9 @@ class DiscogsApp:
             self.tree.heading(column, text=column, command=lambda col=column: self.sort_by(col))
             self.tree.column(column, width=fit_width(column), anchor="w")
 
-        for row in self.df.itertuples(index=False, name=None):
-            self.tree.insert("", "end", values=row)
+        for i, row in enumerate(self.df.itertuples(index=False, name=None)):
+            tag = "evenrow" if i % 2 == 0 else "oddrow"
+            self.tree.insert("", "end", values=row, tags=(tag,))
 
         self.tree.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
@@ -146,9 +149,10 @@ class DiscogsApp:
         for item in self.tree.get_children():
             self.tree.delete(item)
 
-        # Insert sorted rows
-        for row in self.df.itertuples(index=False, name=None):
-            self.tree.insert("", "end", values=row)
+        # Insert sorted rows with alternating colors
+        for i, row in enumerate(self.df.itertuples(index=False, name=None)):
+            tag = "evenrow" if i % 2 == 0 else "oddrow"
+            self.tree.insert("", "end", values=row, tags=(tag,))
 
 
 if __name__ == "__main__":
