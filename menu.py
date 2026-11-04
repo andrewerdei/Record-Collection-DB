@@ -89,7 +89,13 @@ class DiscogsApp:
 
         self.table = tk.Toplevel(root)
         self.table.title("Data Table")
-        self.table.geometry("800x400")
+        self.table.geometry("1000x600")
+
+        def fit_width(column):
+            max_width = max(
+                [len(str(column))] + [len(str(value)) for value in self.df[column]]
+            )
+            return max_width * 8
 
         tree = ttk.Treeview(
             self.table,
@@ -101,7 +107,7 @@ class DiscogsApp:
 
         for column in self.df.columns:
             tree.heading(column, text=column)
-            tree.column(column, width=120, anchor="w")
+            tree.column(column, width=fit_width(column), anchor="w")
 
         for row in self.df.itertuples(index=False, name=None):
             tree.insert("", "end", values=row)
